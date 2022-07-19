@@ -52,6 +52,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     public HashMap() {
         this.loadFactor = DEFAULT_LOAD_FACTOR; // all other fields defaulted
     }
+
     //指定容量大小
     public HashMap(int initialCapacity) {
         this(initialCapacity, DEFAULT_LOAD_FACTOR);
@@ -78,6 +79,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         //tableSizeFor用于查找到大于给定数值的最近2次幂值，比如给定18就是32。给定33就是64。
         this.threshold = tableSizeFor(initialCapacity);
     }
+
     //传入一个Map集合,将Map集合中元素Map.Entry全部添加进HashMap实例中
     public HashMap(Map<? extends K, ? extends V> m) {
         this.loadFactor = DEFAULT_LOAD_FACTOR;
@@ -272,15 +274,18 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         if ((tab = table) != null && (n = tab.length) > 0 &&
                 (first = tab[(n - 1) & hash]) != null) {
             if (first.hash == hash && // always check first node
-                    ((k = first.key) == key || (key != null && key.equals(k))))
+                    ((k = first.key) == key || (key != null && key.equals(k)))) {
                 return first;
+            }
             if ((e = first.next) != null) {
-                if (first instanceof HashMap.TreeNode)
+                if (first instanceof HashMap.TreeNode) {
                     return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+                }
                 do {
                     if (e.hash == hash &&
-                            ((k = e.key) == key || (key != null && key.equals(k))))
+                            ((k = e.key) == key || (key != null && key.equals(k)))) {
                         return e;
+                    }
                 } while ((e = e.next) != null);
             }
         }
@@ -316,6 +321,15 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     //HashMap.put的具体实现
+    /**
+     1.首先获取Node数组table对象和长度，若table为null或长度为0，则调用resize()扩容方法获取table最新对象，并通过此对象获取长度大小
+     2.判定数组中指定索引下的节点是否为Null，若为Null 则new出一个单向链表赋给table中索引下的这个节点
+     3.若判定不为Null,我们的判断再做分支
+     3.1 首先对hash和key进行匹配,若判定成功直接赋予e
+     3.2 若匹配判定失败,则进行类型匹配是否为TreeNode 若判定成功则在红黑树中查找符合条件的节点并将其回传赋给e
+     3.3 若以上判定全部失败则进行最后操作,向单向链表中添加数据若单向链表的长度大于等于8,则将其转为红黑树保存，记录下一个节点,对e进行判定若成功则返回旧值
+     4.最后判定数组大小需不需要扩容
+     */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
@@ -354,70 +368,86 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
             if (e != null) { // existing mapping for key
                 V oldValue = e.value;
-                if (!onlyIfAbsent || oldValue == null)
+                if (!onlyIfAbsent || oldValue == null) {
                     e.value = value;
+                }
                 afterNodeAccess(e);
                 return oldValue;
             }
         }
         ++modCount;
         if (++size > threshold) //判断是否需要扩容
+        {
             resize();
+        }
         afterNodeInsertion(evict);
         return null;
     }
-
     /**
-     * Initializes or doubles table size.  If null, allocates in
-     * accord with initial capacity target held in field threshold.
-     * Otherwise, because we are using power-of-two expansion, the
-     * elements from each bin must either stay at same index, or move
-     * with a power of two offset in the new table.
-     *
-     * @return the table
+     1.判定数组是否已达到极限大小，若判定成功将不再扩容，直接将老表返回
+     2.若新表大小(oldCap2)小于数组极限大小&老表大于等于数组初始化大小 判定成功则 旧数组大小oldThr 经二进制运算向左位移1个位置 即 oldThr2当作新数组的大小
+     2.1. 若[2]的判定不成功，则继续判定 oldThr （代表 老表的下一次扩容量）大于0，若判定成功 则将oldThr赋给newCap作为新表的容量
+     2.2 若 [2] 和[2.1]判定都失败,则走默认赋值 代表 表为初次创建
+     3.确定下一次表的扩容量, 将新表赋予当前表
+     4.通过for循环将老表中德值存入扩容后的新表中
+     4.1 获取旧表中指定索引下的Node对象 赋予e 并将旧表中的索引位置数据置空
+     4.2 若e的下面没有其他节点则将e直接赋到新表中的索引位置
+     4.3 若e的类型为TreeNode红黑树类型
+     4.3.1 分割树，将新表和旧表分割成两个树，并判断索引处节点的长度是否需要转换成红黑树放入新表存储
+     4.3.2 通过Do循环 不断获取新旧索引的节点
+     4.3.3 通过判定将旧数据和新数据存储到新表指定的位置
      */
+
+    //重新设置table大小/扩容 并返回扩容的Node数组即HashMap的最新数据
     final Node<K,V>[] resize() {
-        Node<K,V>[] oldTab = table;
+        Node<K,V>[] oldTab = table; //table赋予oldTab作为扩充前的table数据
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
         int oldThr = threshold;
         int newCap, newThr = 0;
         if (oldCap > 0) {
+            //判定数组是否已达到极限大小，若判定成功将不再扩容，直接将老表返回
             if (oldCap >= MAXIMUM_CAPACITY) {
                 threshold = Integer.MAX_VALUE;
                 return oldTab;
             }
+            //若新表大小(oldCap*2)小于数组极限大小 并且 老表大于等于数组初始化大小
             else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
                     oldCap >= DEFAULT_INITIAL_CAPACITY)
+                //旧数组大小oldThr 经二进制运算向左位移1个位置 即 oldThr*2当作新数组的大小
                 newThr = oldThr << 1; // double threshold
         }
-        else if (oldThr > 0) // initial capacity was placed in threshold
-            newCap = oldThr;
-        else {               // zero initial threshold signifies using defaults
+        //若老表中下次扩容大小oldThr大于0
+        else if (oldThr > 0)
+            newCap = oldThr;  //将oldThr赋予控制新表大小的newCap
+        else { //若其他情况则将获取初始默认大小
             newCap = DEFAULT_INITIAL_CAPACITY;
             newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
         }
+        //若新表的下表下一次扩容大小为0
         if (newThr == 0) {
-            float ft = (float)newCap * loadFactor;
+            float ft = (float)newCap * loadFactor;  //通过新表大小*负载因子获取
             newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
                     (int)ft : Integer.MAX_VALUE);
         }
-        threshold = newThr;
+        threshold = newThr; //下次扩容的大小
         @SuppressWarnings({"rawtypes","unchecked"})
         Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
-        table = newTab;
-        if (oldTab != null) {
+        table = newTab; //将当前表赋予table
+        if (oldTab != null) { //若oldTab中有值需要通过循环将oldTab中的值保存到新表中
             for (int j = 0; j < oldCap; ++j) {
                 Node<K,V> e;
-                if ((e = oldTab[j]) != null) {
-                    oldTab[j] = null;
-                    if (e.next == null)
-                        newTab[e.hash & (newCap - 1)] = e;
-                    else if (e instanceof HashMap.TreeNode)
+                if ((e = oldTab[j]) != null) {//获取老表中第j个元素 赋予e
+                    oldTab[j] = null; //并将老表中的元素数据置Null
+                    if (e.next == null) //若此判定成立 则代表e的下面没有节点了
+                        newTab[e.hash & (newCap - 1)] = e; //将e直接存于新表的指定位置
+                    else if (e instanceof TreeNode)  //若e是TreeNode类型
+                        //分割树，将新表和旧表分割成两个树，并判断索引处节点的长度是否需要转换成红黑树放入新表存储
                         ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
                     else { // preserve order
-                        Node<K,V> loHead = null, loTail = null;
-                        Node<K,V> hiHead = null, hiTail = null;
+                        Node<K,V> loHead = null, loTail = null; //存储与旧索引的相同的节点
+                        Node<K,V> hiHead = null, hiTail = null; //存储与新索引相同的节点
                         Node<K,V> next;
+                        //通过Do循环 获取新旧索引的节点
                         do {
                             next = e.next;
                             if ((e.hash & oldCap) == 0) {
@@ -435,6 +465,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                 hiTail = e;
                             }
                         } while ((e = next) != null);
+                        //通过判定将旧数据和新数据存储到新表指定的位置
                         if (loTail != null) {
                             loTail.next = null;
                             newTab[j] = loHead;
@@ -447,8 +478,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                 }
             }
         }
+        //返回新表
         return newTab;
     }
+
 
     /**
      * Replaces all linked nodes in bin at index for given hash unless
