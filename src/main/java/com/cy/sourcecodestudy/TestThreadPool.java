@@ -18,6 +18,7 @@ public class TestThreadPool
     private static int produceTaskMaxNumber = 10;
 
     public static void main(String[] args)  {
+        new Thread();
         // 构造一个线程池
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(2, 4, 3, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(3),
                 new ThreadPoolExecutor.DiscardOldestPolicy());
@@ -57,4 +58,5 @@ class ThreadPoolTask implements Runnable, Serializable
         System.out.println(Thread.currentThread().getName());
         System.out.println("start .." + threadPoolTaskData);
     }
+
 }
