@@ -1,4 +1,4 @@
-package com.cy.sourcecodestudy.designmode.strategypattern;
+package com.cy.javastudy.designmode.strategypattern;
 
 /**
  * @author chenyao

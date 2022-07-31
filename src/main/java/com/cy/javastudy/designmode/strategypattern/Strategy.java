@@ -1,4 +1,4 @@
-package com.cy.sourcecodestudy.designmode.strategypattern;
+package com.cy.javastudy.designmode.strategypattern;
 
 /** 策略接口类 **/
 public interface Strategy {

@@ -1,6 +1,4 @@
-package com.cy.sourcecodestudy.designmode.strategypattern;
-
-import jdk.nashorn.internal.objects.annotations.Getter;
+package com.cy.javastudy.designmode.strategypattern;
 
 import java.util.Arrays;
 import java.util.Map;

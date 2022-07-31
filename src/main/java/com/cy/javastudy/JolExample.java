@@ -1,4 +1,4 @@
-package com.cy.sourcecodestudy;
+package com.cy.javastudy;
 
 import org.openjdk.jol.info.ClassLayout;
 

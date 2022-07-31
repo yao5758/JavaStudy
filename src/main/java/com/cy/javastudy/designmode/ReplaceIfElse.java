@@ -1,9 +1,4 @@
-package com.cy.sourcecodestudy.designmode;
-
-import com.cy.sourcecodestudy.designmode.strategypattern.Context;
-import com.cy.sourcecodestudy.designmode.strategypattern.RechargeTypeEnum;
-import com.cy.sourcecodestudy.designmode.strategypattern.Strategy;
-import com.cy.sourcecodestudy.designmode.strategypattern.StrategyFactory;
+package com.cy.javastudy.designmode;
 
 /**
  * @author chenyao

@@ -1,4 +1,4 @@
-package com.cy.sourcecodestudy;
+package com.cy.javastudy;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,4 +1,4 @@
-package com.cy.sourcecodestudy;
+package com.cy.javastudy;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;

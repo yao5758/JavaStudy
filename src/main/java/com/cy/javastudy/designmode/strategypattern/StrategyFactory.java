@@ -1,6 +1,4 @@
-package com.cy.sourcecodestudy.designmode.strategypattern;
-
-import com.cy.sourcecodestudy.designmode.ReplaceIfElse;
+package com.cy.javastudy.designmode.strategypattern;
 
 import java.util.HashMap;
 import java.util.Map;
